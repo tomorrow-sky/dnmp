@@ -1,0 +1,78 @@
+version: '3.3'
+services:
+  php8:
+    image: ixmo/mine-admin:latest
+    restart: always
+    environment:
+      - "TIMEZONE=Asia/Shanghai"
+      - "APP_PROJECT=mineadmin"
+      - "APP_SYSTEM_ENV=docker"
+    working_dir: "/opt/www"
+    ports:
+      - 9501:9501
+      - 9502:9502
+      - 9503:9503
+    volumes:
+      - ../Site:/opt/www
+      - ./php8/php-dev.ini:/etc/php8/php.ini:ro
+    entrypoint: [ "php", "MineAdmin/watch", "-c" ]
+
+  nginx:
+    build: ./nginx
+    depends_on:
+      - php8
+    links:
+      - php8:php8
+    volumes:
+      - ../Site:/data/www:rw
+      - ./nginx/conf.d:/etc/nginx/conf.d:rw
+      - ./nginx/cert:/etc/nginx/cert:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/phpcgi.conf:/etc/nginx/phpcgi.conf:ro
+      - ./nginx/fastcgi.conf:/etc/nginx/fastcgi.conf:ro
+      - ./nginx/pathinfo.conf:/etc/nginx/pathinfo.conf:ro
+      - ../logs/nginx:/var/log/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8081"
+    restart: always
+    command: nginx -g 'daemon off;'
+
+  mysql8:
+    build: ./mysql8
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../data/mysql8:/var/lib/mysql:rw
+      - ../logs/mysql8/slow/slow.log:/var/log/mysql/slow.log:rw
+      - ./mysql8/my.cnf:/etc/mysql/my.cnf:ro
+      - ./mysql8/conf.d:/etc/mysql/conf.d:ro
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql123456
+    restart: always
+    command: "--character-set-server=utf8mb4"
+
+  redis-db:
+    build: ./redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ../data/redis:/data
+    restart: always
+
+  rabbitmq:
+    build: ./rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+      - "25672:25672"
+      - "61613:61613"
+      - "1883:1883"
+    volumes:
+      - ../data/rabbitmq:/data
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+
