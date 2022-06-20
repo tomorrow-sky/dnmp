@@ -10,13 +10,10 @@ services:
       - 9501:9501
       - 9502:9502
       - 9503:9503
-      - 9511:9511
-      - 9512:9512
-      - 9513:9513
     volumes:
       - ../Site:/opt/www
       - ./php8/php.ini:/etc/php8/php.ini:ro
-    entrypoint: ["/bin/sh"]
+    entrypoint: ["php", "MineAdmin/watch", "-c"]
 
   nginx:
     build: ./nginx
